@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scroll Image Sequence</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <style>
+      body {
+        margin: 0;
+        height: 300vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fff;
+      }
+      canvas {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100vw;
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="sequenceCanvas"></canvas>
+    <script>
+      const canvas = document.getElementById("sequenceCanvas");
+      const context = canvas.getContext("2d");
+
+      const frameCount = 51; // Jumlah total gambar
+      const images = [];
+      let loadedImages = 0;
+      let currentFrame = (index) =>
+        `render/all pos device${index.toString().padStart(4, "0")}.png`;
+
+      for (let i = 0; i < frameCount; i++) {
+        const img = new Image();
+        img.src = currentFrame(i);
+        img.onload = () => {
+          loadedImages++;
+          if (loadedImages === frameCount) {
+            startAnimation();
+          }
+        };
+        images.push(img);
+      }
+
+      // Tampilkan frame pertama sebelum semua gambar dimuat
+      const firstImage = new Image();
+      firstImage.src = currentFrame(0);
+      firstImage.onload = () => {
+        canvas.width = firstImage.width;
+        canvas.height = firstImage.height;
+        context.drawImage(firstImage, 0, 0);
+      };
+
+      function startAnimation() {
+        let animationObj = { frame: 0 };
+
+        gsap.to(animationObj, {
+          frame: frameCount - 1,
+          snap: "frame",
+          ease: "none",
+          scrollTrigger: {
+            trigger: "body",
+            start: "top top",
+            end: "bottom bottom",
+            scrub: true,
+          },
+          onUpdate: function () {
+            let frameIndex = Math.round(animationObj.frame);
+            frameIndex = Math.max(0, Math.min(frameIndex, frameCount - 1));
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(images[frameIndex], 0, 0);
+          },
+        });
+      }
+    </script>
+  </body>
+</html>
