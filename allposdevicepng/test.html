@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Full Page Sections</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        overflow: hidden;
+      }
+      .container {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        background: #ff5733;
+        transition: background 1s ease-in-out;
+      }
+      .content {
+        position: absolute;
+        text-align: center;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        opacity: 0;
+        transition: opacity 1s ease-in-out;
+      }
+      .content.active {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" id="container">
+      <div class="content active" id="content">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+      </div>
+    </div>
+    <script>
+      const sections = [
+        {
+          bg: "#FF5733",
+          text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+        },
+        {
+          bg: "#33FF57",
+          text: "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+        },
+        {
+          bg: "#3357FF",
+          text: "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
+        },
+        {
+          bg: "#FF33A1",
+          text: "Duis aute irure dolor in reprehenderit in voluptate velit esse.",
+        },
+        {
+          bg: "#FF8C33",
+          text: "Excepteur sint occaecat cupidatat non proident.",
+        },
+        {
+          bg: "#8C33FF",
+          text: "Sunt in culpa qui officia deserunt mollit anim id est laborum.",
+        },
+        {
+          bg: "#33FFF9",
+          text: "Finibus bonorum et malorum, lorem ipsum dolor sit amet.",
+        },
+      ];
+
+      let currentIndex = 0;
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+          currentIndex =
+            e.key === "ArrowDown"
+              ? Math.min(currentIndex + 1, sections.length - 1)
+              : Math.max(currentIndex - 1, 0);
+
+          const container = document.getElementById("container");
+          const content = document.getElementById("content");
+
+          content.classList.remove("active");
+          setTimeout(() => {
+            container.style.background = sections[currentIndex].bg;
+            content.textContent = sections[currentIndex].text;
+            content.classList.add("active");
+          }, 500);
+        }
+      });
+    </script>
+  </body>
+</html>
