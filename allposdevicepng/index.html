@@ -9,76 +9,164 @@
     <style>
       body {
         margin: 0;
-        height: 300vh;
+        font-family: Arial, sans-serif;
+      }
+      section {
+        height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #fff;
+        position: relative;
+        text-align: center;
+        color: white;
+        font-size: 2rem;
+        font-weight: bold;
       }
-      canvas {
+      .section-1 {
+        background: #ff5733;
+      }
+      .section-2 {
+        background: #33aaff;
+      }
+      .section-3 {
+        background: #ff33aa;
+      }
+      .section-4 {
+        background: #33ffaa;
+      }
+      .section-5 {
+        background: #aa33ff;
+      }
+      .section-6 {
+        background: #ffaa33;
+      }
+      .section-7 {
+        background: #66ccff;
+      }
+
+      .image-sequence {
         position: fixed;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 100vw;
-        height: auto;
+        width: auto;
+        height: 100vh;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 1; /* Default rendah */
       }
     </style>
   </head>
   <body>
-    <canvas id="sequenceCanvas"></canvas>
+    <section class="section-1">
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+    </section>
+
+    <section class="section-2">
+      <div>Sequence 1 - Lorem ipsum dolor sit amet.</div>
+      <canvas class="image-sequence" id="sequenceCanvas1"></canvas>
+    </section>
+
+    <section class="section-3">
+      <div>Sequence 2 - Lorem ipsum dolor sit amet.</div>
+      <canvas class="image-sequence" id="sequenceCanvas2"></canvas>
+    </section>
+
+    <section class="section-4">
+      <div>Sequence 3 - Lorem ipsum dolor sit amet.</div>
+      <canvas class="image-sequence" id="sequenceCanvas3"></canvas>
+    </section>
+
+    <section class="section-5">
+      <div>Sequence 4 - Lorem ipsum dolor sit amet.</div>
+      <canvas class="image-sequence" id="sequenceCanvas4"></canvas>
+    </section>
+
+    <section class="section-6">
+      <div>Sequence 5 - Lorem ipsum dolor sit amet.</div>
+      <canvas class="image-sequence" id="sequenceCanvas5"></canvas>
+    </section>
+
+    <section class="section-7">
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+    </section>
+
     <script>
-      const canvas = document.getElementById("sequenceCanvas");
-      const context = canvas.getContext("2d");
+      function setupImageSequence(
+        canvasId,
+        sequenceName,
+        startFrame,
+        frameCount
+      ) {
+        const canvas = document.getElementById(canvasId);
+        const context = canvas.getContext("2d");
+        const images = [];
+        let loadedImages = 0;
+        let currentFrame = (index) =>
+          `image/${sequenceName}${(startFrame + index)
+            .toString()
+            .padStart(4, "0")}.png`;
 
-      const frameCount = 51; // Jumlah total gambar
-      const images = [];
-      let loadedImages = 0;
-      let currentFrame = (index) =>
-        `render/all pos device${index.toString().padStart(4, "0")}.png`;
-
-      for (let i = 0; i < frameCount; i++) {
-        const img = new Image();
-        img.src = currentFrame(i);
-        img.onload = () => {
-          loadedImages++;
-          if (loadedImages === frameCount) {
-            startAnimation();
-          }
-        };
-        images.push(img);
+        for (let i = 0; i < frameCount; i++) {
+          const img = new Image();
+          img.src = currentFrame(i);
+          img.onload = () => {
+            loadedImages++;
+            if (loadedImages === frameCount) {
+              startAnimation(canvas, context, images);
+            }
+          };
+          images.push(img);
+        }
       }
 
-      // Tampilkan frame pertama sebelum semua gambar dimuat
-      const firstImage = new Image();
-      firstImage.src = currentFrame(0);
-      firstImage.onload = () => {
-        canvas.width = firstImage.width;
-        canvas.height = firstImage.height;
-        context.drawImage(firstImage, 0, 0);
-      };
+      function startAnimation(canvas, context, images) {
+        canvas.width = images[0].width;
+        canvas.height = images[0].height;
+        context.drawImage(images[0], 0, 0);
 
-      function startAnimation() {
         let animationObj = { frame: 0 };
 
         gsap.to(animationObj, {
-          frame: frameCount - 1,
+          frame: images.length - 1,
           snap: "frame",
           ease: "none",
           scrollTrigger: {
-            trigger: "body",
-            start: "top top",
-            end: "bottom bottom",
+            trigger: canvas.parentElement,
+            start: "top center",
+            end: "bottom center",
             scrub: true,
+            onEnter: () => {
+              gsap.set(canvas, { zIndex: 10 }); // Saat masuk, naikkan z-index
+              gsap.to(canvas, { opacity: 1, duration: 0 });
+            },
+            onLeave: () => {
+              gsap.to(canvas, { opacity: 0, duration: 0 });
+              gsap.set(canvas, { zIndex: 1 }); // Saat keluar, kembalikan z-index ke default
+            },
+            onEnterBack: () => {
+              gsap.set(canvas, { zIndex: 10 }); // Saat scroll balik, naikkan z-index lagi
+              gsap.to(canvas, { opacity: 1, duration: 0 });
+            },
+            onLeaveBack: () => {
+              gsap.to(canvas, { opacity: 0, duration: 0 });
+              gsap.set(canvas, { zIndex: 1 }); // Saat keluar balik, kembalikan z-index ke default
+            },
           },
           onUpdate: function () {
             let frameIndex = Math.round(animationObj.frame);
-            frameIndex = Math.max(0, Math.min(frameIndex, frameCount - 1));
+            frameIndex = Math.max(0, Math.min(frameIndex, images.length - 1));
             context.clearRect(0, 0, canvas.width, canvas.height);
             context.drawImage(images[frameIndex], 0, 0);
           },
         });
       }
+
+      setupImageSequence("sequenceCanvas1", "seq1/all pos device", 0, 51);
+      setupImageSequence("sequenceCanvas2", "seq2/all pos device", 51, 50);
+      setupImageSequence("sequenceCanvas3", "seq3/all pos device", 101, 50);
+      setupImageSequence("sequenceCanvas4", "seq4/all pos device", 151, 40);
+      setupImageSequence("sequenceCanvas5", "seq5/all pos device", 191, 50);
     </script>
   </body>
 </html>
