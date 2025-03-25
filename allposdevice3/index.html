@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Three.js GLB Scroll Animation</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
+          "three/examples/jsm/loaders/GLTFLoader": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js"
+        }
+      }
+    </script>
+    <style>
+      body {
+        margin: 0;
+        overflow-x: hidden;
+        background-color: white;
+        height: 400vh; /* Scroll panjang agar animasi bisa berjalan */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+      import * as THREE from "three";
+      import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+
+      // Setup Scene, Camera, Renderer
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xffffff);
+
+      const camera = new THREE.PerspectiveCamera(
+        50,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+
+      // ✅ Posisi awal dan akhir kamera (atur sesuai keinginan)
+      const cameraStart = new THREE.Vector3(0, 0.5, 1.5);
+      const cameraEnd = new THREE.Vector3(0, 0.8, 5);
+
+      camera.position.copy(cameraStart); // Set posisi awal
+
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+      });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      // Load Model GLB
+      const loader = new GLTFLoader();
+      let model = null;
+      let mixer;
+      let actions = [];
+      let maxDuration = 0; // Durasi animasi terpanjang
+      let scrollPercent = 0; // Menyimpan posisi scroll sebagai persen
+
+      loader.load(
+        "model.glb", // Ganti dengan path model GLB-mu
+        function (gltf) {
+          model = gltf.scene;
+          model.position.set(0, 0, 0);
+          scene.add(model);
+
+          // Setup AnimationMixer
+          mixer = new THREE.AnimationMixer(model);
+
+          // Loop semua animasi dalam GLB
+          gltf.animations.forEach((clip) => {
+            let action = mixer.clipAction(clip);
+            action.clampWhenFinished = true;
+            action.loop = THREE.LoopOnce;
+            action.play(); // Play sekali agar tidak idle
+            actions.push({ action, duration: clip.duration });
+          });
+
+          // Cari durasi animasi terpanjang
+          maxDuration = Math.max(...actions.map((a) => a.duration));
+        },
+        undefined,
+        function (error) {
+          console.error("Error loading model:", error);
+        }
+      );
+
+      // Scroll event untuk update animasi dan kamera
+      window.addEventListener("scroll", () => {
+        let rawScroll =
+          window.scrollY / (document.body.scrollHeight - window.innerHeight);
+        scrollPercent = Math.min(Math.max(rawScroll, 0), 1); // Batasi ke 0% - 100%
+      });
+
+      // Loop Rendering
+      function animate() {
+        requestAnimationFrame(animate);
+
+        if (mixer) {
+          actions.forEach(({ action, duration }) => {
+            action.time = scrollPercent * duration; // Atur waktu animasi berdasarkan scroll
+            mixer.update(0); // Paksa update mixer
+          });
+        }
+
+        // ✅ Animasi Kamera (hanya berjalan dari 0% sampai 50% scroll)
+        let cameraProgress = Math.min(scrollPercent * 2, 1); // 0 - 50% = 0 - 1
+        camera.position.lerpVectors(cameraStart, cameraEnd, cameraProgress);
+
+        renderer.render(scene, camera);
+      }
+
+      animate();
+
+      // Resize Responsif
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    </script>
+  </body>
+</html>
